@@ -34,4 +34,11 @@ fi
 
 # Start HDFS/Spark main here
 
+export HADOOP_HOME=${HADOOP_HOME:-/opt/hadoop}
+export PATH="${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin:${PATH}"
+
+# Start NameNode and local DataNode on main
+hdfs --daemon start namenode
+hdfs --daemon start datanode
+
 bash

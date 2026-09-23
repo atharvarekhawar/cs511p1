@@ -18,5 +18,30 @@ RUN ssh-keygen -t rsa -P '' -f ~/.ssh/shared_rsa -C common && \
 ####################################################################################
 
 # Setup HDFS/Spark resources here
-# (the PySpark skeleton of Part 3 also needs python3 on every node; Spark 3.4.1
-#  supports Python 3.7-3.11, so do not install a newer interpreter)
+
+# Install dependencies
+RUN apt update && \
+    apt install -y curl wget tar && \
+    rm -rf /var/lib/apt/lists/*
+
+# Hadoop configuration
+ENV HADOOP_VERSION=3.3.6
+ENV HADOOP_HOME=/opt/hadoop
+ENV JAVA_HOME=/opt/java/openjdk
+ENV PATH="${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin:${PATH}"
+
+# Download and install Hadoop from Apache CDN
+RUN curl -L --fail --retry 5 \
+    https://dlcdn.apache.org/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz \
+    -o /tmp/hadoop.tar.gz && \
+    tar -xzf /tmp/hadoop.tar.gz -C /opt && \
+    mv /opt/hadoop-${HADOOP_VERSION} ${HADOOP_HOME} && \
+    rm /tmp/hadoop.tar.gz
+
+# Set JAVA_HOME for Hadoop
+RUN echo "export JAVA_HOME=/opt/java/openjdk" \
+    >> ${HADOOP_HOME}/etc/hadoop/hadoop-env.sh
+
+# Create Hadoop data directories
+RUN mkdir -p ${HADOOP_HOME}/data/namenode \
+    ${HADOOP_HOME}/data/datanode

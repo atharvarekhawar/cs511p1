@@ -1,5 +1,6 @@
 #!/bin/bash
-export JAVA_HOME=/opt/java/openjdk
+export HADOOP_HOME=${HADOOP_HOME:-/opt/hadoop}
+export PATH="${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin:${PATH}"
 
 ####################################################################################
 # DO NOT MODIFY THE BELOW ##########################################################
@@ -11,4 +12,40 @@ chmod 0600 ~/.ssh/authorized_keys
 # DO NOT MODIFY THE ABOVE ##########################################################
 ####################################################################################
 
-# Setup HDFS/Spark worker here
+HADOOP_CONF_DIR=${HADOOP_HOME}/etc/hadoop
+
+# core-site.xml setup
+cat <<EOF > ${HADOOP_CONF_DIR}/core-site.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://main:9000</value>
+    </property>
+</configuration>
+EOF
+
+# hdfs-site.xml setup with FAST HEARTBEATS
+cat <<EOF > ${HADOOP_CONF_DIR}/hdfs-site.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+    <property>
+        <name>dfs.replication</name>
+        <value>2</value>
+    </property>
+    <property>
+        <name>dfs.datanode.data.dir</name>
+        <value>/opt/hadoop/data/datanode</value>
+    </property>
+    <property>
+        <name>dfs.heartbeat.interval</name>
+        <value>1</value>
+    </property>
+    <property>
+        <name>dfs.namenode.heartbeat.recheck-interval</name>
+        <value>1000</value>
+    </property>
+</configuration>
+EOF

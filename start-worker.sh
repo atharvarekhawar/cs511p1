@@ -18,4 +18,10 @@ fi
 
 # Start HDFS/Spark worker here
 
+export HADOOP_HOME=${HADOOP_HOME:-/opt/hadoop}
+export PATH="${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin:${PATH}"
+
+# Start DataNode daemon on worker nodes
+hdfs --daemon start datanode
+
 bash
