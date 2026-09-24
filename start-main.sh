@@ -41,4 +41,9 @@ export PATH="${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin:${PATH}"
 hdfs --daemon start namenode
 hdfs --daemon start datanode
 
+# Start Spark master and a local worker on main
+export SPARK_HOME=${SPARK_HOME:-/opt/spark}
+${SPARK_HOME}/sbin/start-master.sh
+${SPARK_HOME}/sbin/start-worker.sh spark://main:7077
+
 bash

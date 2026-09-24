@@ -24,4 +24,12 @@ export PATH="${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin:${PATH}"
 # Start DataNode daemon on worker nodes
 hdfs --daemon start datanode
 
+# Wait for the Spark master, then start a worker
+export SPARK_HOME=${SPARK_HOME:-/opt/spark}
+for i in {1..60}; do
+    (echo > /dev/tcp/main/7077) 2>/dev/null && break
+    sleep 1
+done
+${SPARK_HOME}/sbin/start-worker.sh spark://main:7077
+
 bash

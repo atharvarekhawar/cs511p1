@@ -49,3 +49,19 @@ cat <<EOF > ${HADOOP_CONF_DIR}/hdfs-site.xml
     </property>
 </configuration>
 EOF
+
+# Spark setup
+export SPARK_HOME=${SPARK_HOME:-/opt/spark}
+
+cat <<EOT > ${SPARK_HOME}/conf/spark-env.sh
+export JAVA_HOME=/opt/java/openjdk
+export HADOOP_CONF_DIR=${HADOOP_CONF_DIR}
+export SPARK_MASTER_HOST=main
+export SPARK_MASTER_PORT=7077
+export SPARK_WORKER_MEMORY=2g
+EOT
+
+cat <<EOT > ${SPARK_HOME}/conf/spark-defaults.conf
+spark.master            spark://main:7077
+spark.executor.memory   1g
+EOT

@@ -45,3 +45,26 @@ RUN echo "export JAVA_HOME=/opt/java/openjdk" \
 # Create Hadoop data directories
 RUN mkdir -p ${HADOOP_HOME}/data/namenode \
     ${HADOOP_HOME}/data/datanode
+
+# Spark configuration
+ENV SPARK_VERSION=3.4.1
+ENV SPARK_HOME=/opt/spark
+ENV HADOOP_CONF_DIR=${HADOOP_HOME}/etc/hadoop
+ENV PATH="${SPARK_HOME}/bin:${PATH}"
+
+# Download and install Spark. Try fast mirrors first, fall back to the slow
+# Apache archive, and verify against the official SHA-512 either way.
+ENV SPARK_SHA512=5a21295b4c3d1d3f8fc85375c711c7c23e3eeb3ec9ea91778f149d8d321e3905e2f44cf19c69a28df693cffd536f7316706c78932e7e148d224424150f18b2c5
+RUN SPARK_TGZ=spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
+    for base in \
+        https://mirror.lyrahosting.com/apache/spark \
+        https://mirrors.huaweicloud.com/apache/spark \
+        https://archive.apache.org/dist/spark; do \
+        curl -L --fail --retry 3 --connect-timeout 10 "${base}/${SPARK_TGZ}" -o /tmp/spark.tgz && \
+        echo "${SPARK_SHA512}  /tmp/spark.tgz" | sha512sum -c - && break; \
+        rm -f /tmp/spark.tgz; \
+    done && \
+    test -f /tmp/spark.tgz && \
+    tar -xzf /tmp/spark.tgz -C /opt && \
+    mv /opt/spark-${SPARK_VERSION}-bin-hadoop3 ${SPARK_HOME} && \
+    rm /tmp/spark.tgz
