@@ -29,6 +29,8 @@ run-wikiindex.sh; the test scripts call it to submit this file.
 import json
 import re
 import sys
+from collections import Counter
+from operator import add
 
 from pyspark.sql import SparkSession
 
@@ -48,7 +50,18 @@ def parse_article(line):
     instead of failing the job.
     """
     # TODO: implement.
-    raise NotImplementedError("parse_article")
+    try:
+        article = json.loads(line)
+    except ValueError:
+        return None
+    if not isinstance(article, dict):
+        return None
+    article_id, text = article.get("id"), article.get("text")
+    if not isinstance(article_id, int) or isinstance(article_id, bool):
+        return None
+    if not isinstance(text, str):
+        return None
+    return (article_id, text)
 
 
 def tokenize(text):
@@ -59,7 +72,8 @@ def tokenize(text):
     STOPWORDS. Repeated words are kept: the caller counts them.
     """
     # TODO: implement.
-    raise NotImplementedError("tokenize")
+    return [token for token in TOKEN_PATTERN.findall(text.lower())
+            if len(token) >= MIN_TOKEN_LENGTH and token not in STOPWORDS]
 
 
 def build_index(lines):
@@ -70,7 +84,15 @@ def build_index(lines):
     """
     # TODO: parse the lines, tokenize the text, count each (word, article_id)
     # pair, then group the counts by word.
-    raise NotImplementedError("build_index")
+    # Count terms within each article first to shrink the shuffle, then sum
+    # per (word, article_id) in case an article id appears more than once.
+    return lines.map(parse_article) \
+        .filter(lambda article: article is not None) \
+        .flatMap(lambda article: (((word, article[0]), tf) for word, tf
+                                  in Counter(tokenize(article[1])).items())) \
+        .reduceByKey(add) \
+        .map(lambda kv: (kv[0][0], (kv[0][1], kv[1]))) \
+        .groupByKey()
 
 
 def format_record(word, postings):
